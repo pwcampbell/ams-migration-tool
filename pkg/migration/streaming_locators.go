@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -60,7 +61,8 @@ func ImportStreamingLocators(ctx context.Context, client *mkiosdk.StreamingLocat
 		}
 
 		// We don't have an existing resource... We can create one
-		log.Debugf("Creating StreamingLocator in MKIO: %v", *sl.Name)
+		body, err := json.Marshal(*sl)
+		log.Debugf("Creating StreamingLocator in MKIO: %s", string(body))
 
 		_, err = client.CreateOrUpdate(ctx, *sl.Name, *sl, nil)
 		if err != nil {
