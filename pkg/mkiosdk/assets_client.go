@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/mediaservices/armmediaservices"
+	log "github.com/sirupsen/logrus"
 )
 
 // AssetsClient contains the methods for the Assets group.
@@ -54,7 +55,26 @@ func NewAssetsClient(ctx context.Context, subscriptionName string, token string,
 // parameters - The request parameters
 // options - AssetsClientCreateOrUpdateOptions contains the optional parameters for the AssetsClient.CreateOrUpdate method.
 func (client *AssetsClient) CreateOrUpdate(ctx context.Context, assetName string, parameters *armmediaservices.Asset, options *armmediaservices.AssetsClientCreateOrUpdateOptions) (armmediaservices.AssetsClientCreateOrUpdateResponse, error) {
-	req, err := client.createOrUpdateCreateRequest(ctx, assetName, parameters, options)
+	// better way to do this?! I don't know golang too well
+	deletePolicy := "Delete"
+	params := Asset{
+		Properties: &AssetProperties{
+			AlternateID:             parameters.Properties.AlternateID,
+			AssetID:                 parameters.Properties.AssetID,
+			Container:               parameters.Properties.Container,
+			ContainerDeletionPolicy: (*ContainerDeletePolicy)(&deletePolicy),
+			Description:             parameters.Properties.Description,
+			StorageAccountName:      parameters.Properties.StorageAccountName,
+			Created:                 parameters.Properties.Created,
+			LastModified:            parameters.Properties.LastModified,
+			StorageEncryptionFormat: parameters.Properties.StorageEncryptionFormat,
+		},
+		ID:         parameters.ID,
+		Name:       parameters.Name,
+		SystemData: parameters.SystemData,
+		Type:       parameters.Type,
+	}
+	req, err := client.createOrUpdateCreateRequest(ctx, assetName, &params, options)
 	if err != nil {
 		return armmediaservices.AssetsClientCreateOrUpdateResponse{}, err
 	}
@@ -69,7 +89,7 @@ func (client *AssetsClient) CreateOrUpdate(ctx context.Context, assetName string
 }
 
 // createOrUpdateCreateRequest creates the CreateOrUpdate request.
-func (client *AssetsClient) createOrUpdateCreateRequest(ctx context.Context, assetName string, parameters *armmediaservices.Asset, options *armmediaservices.AssetsClientCreateOrUpdateOptions) (*http.Request, error) {
+func (client *AssetsClient) createOrUpdateCreateRequest(ctx context.Context, assetName string, parameters *Asset, options *armmediaservices.AssetsClientCreateOrUpdateOptions) (*http.Request, error) {
 	urlPath := "/api/ams/{subscriptionName}/assets/{assetName}"
 	if client.subscriptionName == "" {
 		return nil, errors.New("parameter client.subscriptionName cannot be empty")
@@ -80,6 +100,7 @@ func (client *AssetsClient) createOrUpdateCreateRequest(ctx context.Context, ass
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf(string(body))
 	path, err := url.JoinPath(client.host, urlPath)
 	if err != nil {
 		return nil, err
