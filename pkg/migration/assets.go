@@ -47,6 +47,14 @@ func ImportAssets(ctx context.Context, client *mkiosdk.AssetsClient, assets []*a
 			continue
 		}
 
+		if found && overwrite {
+			// it exists, but we're overwriting, so we should delete it
+			_, err := client.Delete(ctx, *asset.Name, nil)
+			if err != nil {
+				log.Errorf("unable to delete old asset %v for overwrite: %v", *asset.Name, err)
+			}
+		}
+
 		log.Debugf("Creating Asset in MKIO: %v", *asset.Name)
 
 		_, err = client.CreateOrUpdate(ctx, *asset.Name, asset, nil)
