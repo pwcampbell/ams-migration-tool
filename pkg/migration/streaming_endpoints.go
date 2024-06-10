@@ -10,14 +10,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// ExportStreamingEndponts creates a file containing all StreamingEndpoints from an AzureMediaService Subscription
-func ExportStreamingEndpoints(ctx context.Context, azSp *AzureServiceProvider) ([]*armmediaservices.StreamingEndpoint, error) {
+// ExportAzStreamingEndponts creates a file containing all StreamingEndpoints from an AzureMediaService Subscription
+func ExportAzStreamingEndpoints(ctx context.Context, azSp *AzureServiceProvider) ([]*armmediaservices.StreamingEndpoint, error) {
 	log.Info("Exporting Streaming Endpoints")
 
 	// Lookup StreamingEndpoins
 	se, err := azSp.lookupStreamingEndpoints(ctx)
 	if err != nil {
 		return se, fmt.Errorf("encountered error while exporting StreamingEndpoints From Azure: %v", err)
+	}
+
+	return se, nil
+}
+
+// ExportMkStreamingEndponts creates a file containing all StreamingEndpoints from a mk.io Subscription
+func ExportMkStreamingEndpoints(ctx context.Context, client *mkiosdk.StreamingEndpointsClient) ([]*armmediaservices.StreamingEndpoint, error) {
+	log.Info("Exporting Streaming Endpoints")
+
+	// Lookup StreamingEndpoins
+	se, err := client.LookupStreamingEndpoints(ctx)
+	if err != nil {
+		return se, fmt.Errorf("encountered error while exporting StreamingEndpoints From mk.io: %v", err)
 	}
 
 	return se, nil
@@ -70,6 +83,10 @@ func ImportStreamingEndpoints(ctx context.Context, client *mkiosdk.StreamingEndp
 			log.Debugf("Location mismatch for %v. Setting to westus2", *se.Name)
 			westus := "westus2"
 			se.Location = &westus
+		} else if *se.Location == "West Europe" {
+			log.Debugf("Location mismatch for %v. Setting to westeurope", *se.Name)
+			westeurope := "westeurope"
+			se.Location = &westeurope
 		}
 
 		// Not supported CDN Provider. Set to Akamai, with user input

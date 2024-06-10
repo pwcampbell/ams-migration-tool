@@ -3,21 +3,33 @@ package migrate
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"dev.azure.com/mediakind/mkio/ams-migration-tool.git/pkg/mkiosdk"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/mediaservices/armmediaservices"
 	log "github.com/sirupsen/logrus"
 )
 
-// ExportAssets creates a file containing all Assets from an AzureMediaService Subscription
-func ExportAssets(ctx context.Context, azSp *AzureServiceProvider) ([]*armmediaservices.Asset, error) {
+// ExportAzAssets creates a file containing all Assets from an AzureMediaService Subscription
+func ExportAzAssets(ctx context.Context, azSp *AzureServiceProvider) ([]*armmediaservices.Asset, error) {
 	log.Info("Exporting Assets")
 
 	// Lookup Assets
 	assets, err := azSp.lookupAssets(ctx)
 	if err != nil {
 		return assets, fmt.Errorf("encountered error while exporting assets from Azure: %v", err)
+	}
+
+	return assets, nil
+}
+
+// ExportMkAssets creates a file containing all Assets from a mk.io Subscription
+func ExportMkAssets(ctx context.Context, client *mkiosdk.AssetsClient) ([]*armmediaservices.Asset, error) {
+	log.Info("Exporting Assets")
+
+	// Lookup Assets
+	assets, err := client.LookupAssets(ctx)
+	if err != nil {
+		return assets, fmt.Errorf("encountered error while exporting assets from mk.io : %v", err)
 	}
 
 	return assets, nil
@@ -37,12 +49,11 @@ func ImportAssets(ctx context.Context, client *mkiosdk.AssetsClient, assets []*a
 		// Check if asset already exists. Skip update unless overwrite is set
 		_, err := client.Get(ctx, *asset.Name, nil)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
-				found = false
-			}
+			found = false
 		}
 		if found && !overwrite {
 			// Found something and we're not overwriting. We should skip it
+			log.Debugf("Asset already exists in MKIO, skipping: %v", *asset.Name)
 			skipped++
 			continue
 		}
