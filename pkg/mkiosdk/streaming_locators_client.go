@@ -55,8 +55,6 @@ func NewStreamingLocatorsClient(ctx context.Context, subscriptionName string, to
 // parameters - The request parameters
 // options - StreamingLocatorsClientCreateOrUpdateOptions contains the optional parameters for the StreamingLocatorsClient.CreateOrUpdate method.
 func (client *StreamingLocatorsClient) CreateOrUpdate(ctx context.Context, streamingLocatorName string, parameters armmediaservices.StreamingLocator, options *armmediaservices.StreamingLocatorsClientCreateOptions) (armmediaservices.StreamingLocatorsClientCreateResponse, error) {
-	// empty content keys https://github.com/mediakind-video/ams-migration-tool/issues/27
-	parameters.Properties.ContentKeys = []*armmediaservices.StreamingLocatorContentKey{}
 	req, err := client.createOrUpdateCreateRequest(ctx, streamingLocatorName, parameters, options)
 	if err != nil {
 		return armmediaservices.StreamingLocatorsClientCreateResponse{}, fmt.Errorf("unable to generate Create/Update request: %v", err)
