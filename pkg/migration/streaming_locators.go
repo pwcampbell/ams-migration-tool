@@ -77,6 +77,11 @@ func ImportStreamingLocators(ctx context.Context, client *mkiosdk.StreamingLocat
 		body, err := json.Marshal(*sl)
 		log.Debugf("Creating StreamingLocator in MKIO: %s", string(body))
 
+		if strings.HasPrefix(*sl.Properties.StreamingPolicyName, "Predefined_") {
+			log.Infof("removing customer ContentKeys from StreamingLocator with Predefined Streaming Policy: %v", *sl.Name)
+			sl.Properties.ContentKeys = nil
+		}
+
 		_, err = client.CreateOrUpdate(ctx, *sl.Name, *sl, nil)
 		if err != nil {
 			failedSL = append(failedSL, *sl.Name)
